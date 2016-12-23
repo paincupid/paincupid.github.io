@@ -1,0 +1,850 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="concurrent,design thinking," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="painArthur's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="编写优质的并发代码是一件难度极高的事情。Java语言从第一版本开始内置了对多线程的支持，这一点在当年是非常了不起的，但是当我们对并发编程有了更深刻的认识和更多的实践后，实现并发编程就有了更多的方案和更好的选择。本文是对并发编程的一点总结和思考，同时也分享了Java 5以后的版本中如何编写并发代码的一点点经验。
+为什么需要并发  并发其实是一种解耦合的策略，它帮助我们把做什么（目标）和什么时候做（时">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于Java并发编程的总结和思考">
+<meta property="og:url" content="http://willxue.top/2016/12/23/关于Java并发编程的总结和思考/index.html">
+<meta property="og:site_name" content="painArthur's blog">
+<meta property="og:description" content="编写优质的并发代码是一件难度极高的事情。Java语言从第一版本开始内置了对多线程的支持，这一点在当年是非常了不起的，但是当我们对并发编程有了更深刻的认识和更多的实践后，实现并发编程就有了更多的方案和更好的选择。本文是对并发编程的一点总结和思考，同时也分享了Java 5以后的版本中如何编写并发代码的一点点经验。
+为什么需要并发  并发其实是一种解耦合的策略，它帮助我们把做什么（目标）和什么时候做（时">
+<meta property="og:image" content="http://img.blog.csdn.net/20161117223331962">
+<meta property="og:image" content="http://img.blog.csdn.net/20161117223416527">
+<meta property="og:image" content="http://img.blog.csdn.net/20161117223733249">
+<meta property="og:image" content="http://img.blog.csdn.net/20161117223617747">
+<meta property="og:updated_time" content="2016-12-23T14:55:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="关于Java并发编程的总结和思考">
+<meta name="twitter:description" content="编写优质的并发代码是一件难度极高的事情。Java语言从第一版本开始内置了对多线程的支持，这一点在当年是非常了不起的，但是当我们对并发编程有了更深刻的认识和更多的实践后，实现并发编程就有了更多的方案和更好的选择。本文是对并发编程的一点总结和思考，同时也分享了Java 5以后的版本中如何编写并发代码的一点点经验。
+为什么需要并发  并发其实是一种解耦合的策略，它帮助我们把做什么（目标）和什么时候做（时">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20161117223331962">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://willxue.top/2016/12/23/关于Java并发编程的总结和思考/"/>
+
+
+
+
+
+  <title> 关于Java并发编程的总结和思考 | painArthur's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">painArthur's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle">Did you get what you want?</p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-search">
+          <a href="/search" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://willxue.top/2016/12/23/关于Java并发编程的总结和思考/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="arthur.dy.lee">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://chuantu.biz/t5/44/1482477270x1926756903.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="painArthur's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="painArthur's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                关于Java并发编程的总结和思考
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-12-23T22:55:26+08:00">
+                2016-12-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/concurrent/" itemprop="url" rel="index">
+                    <span itemprop="name">concurrent</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>编写优质的并发代码是一件难度极高的事情。Java语言从第一版本开始内置了对多线程的支持，这一点在当年是非常了不起的，但是当我们对并发编程有了更深刻的认识和更多的实践后，实现并发编程就有了更多的方案和更好的选择。本文是对并发编程的一点总结和思考，同时也分享了Java 5以后的版本中如何编写并发代码的一点点经验。</p>
+<h2 id="为什么需要并发"><a href="#为什么需要并发" class="headerlink" title="为什么需要并发"></a>为什么需要并发</h2><p>  并发其实是一种解耦合的策略，它帮助我们把做什么（目标）和什么时候做（时机）分开。这样做可以明显改进应用程序的吞吐量（获得更多的CPU调度时间）和结构（程序有多个部分在协同工作）。做过Java Web开发的人都知道，Java Web中的Servlet程序在Servlet容器的支持下采用单实例多线程的工作模式，Servlet容器为你处理了并发问题。</p>
+<h2 id="误解和正解"><a href="#误解和正解" class="headerlink" title="误解和正解"></a>误解和正解</h2><p>  最常见的对并发编程的误解有以下这些：</p>
+<pre><code>-并发总能改进性能（并发在CPU有很多空闲时间时能明显改进程序的性能，但当线程数量较多的时候，线程间频繁的调度切换反而会让系统的性能下降）
+-编写并发程序无需修改原有的设计（目的与时机的解耦往往会对系统结构产生巨大的影响）
+-在使用Web或EJB容器时不用关注并发问题（只有了解了容器在做什么，才能更好的使用容器）
+</code></pre><p>  下面的这些说法才是对并发客观的认识：</p>
+<pre><code>-编写并发程序会在代码上增加额外的开销
+-正确的并发是非常复杂的，即使对于很简单的问题
+-并发中的缺陷因为不易重现也不容易被发现
+-并发往往需要对设计策略从根本上进行修改
+</code></pre><h2 id="并发编程的原则和技巧"><a href="#并发编程的原则和技巧" class="headerlink" title="并发编程的原则和技巧"></a>并发编程的原则和技巧</h2><h3 id="单一职责原则"><a href="#单一职责原则" class="headerlink" title="单一职责原则"></a>单一职责原则</h3><blockquote>
+<p>分离并发相关代码和其他代码（并发相关代码有自己的开发、修改和调优生命周期）。</p>
+</blockquote>
+<h3 id="限制数据作用域"><a href="#限制数据作用域" class="headerlink" title="限制数据作用域"></a>限制数据作用域</h3><blockquote>
+<p>两个线程修改共享对象的同一字段时可能会相互干扰，导致不可预期的行为，解决方案之一是构造临界区，但是必须限制临界区的数量。</p>
+</blockquote>
+<h3 id="使用数据副本"><a href="#使用数据副本" class="headerlink" title="使用数据副本"></a>使用数据副本</h3><blockquote>
+<p>数据副本是避免共享数据的好方法，复制出来的对象只是以只读的方式对待。Java 5的java.util.concurrent包中增加一个名为CopyOnWriteArrayList的类，它是List接口的子类型，所以你可以认为它是ArrayList的线程安全的版本，它使用了写时复制的方式创建数据副本进行操作来避免对共享数据并发访问而引发的问题。</p>
+</blockquote>
+<h3 id="线程应尽可能独立"><a href="#线程应尽可能独立" class="headerlink" title="线程应尽可能独立"></a>线程应尽可能独立</h3><blockquote>
+<p>让线程存在于自己的世界中，不与其他线程共享数据。有过Java Web开发经验的人都知道，Servlet就是以单实例多线程的方式工作，和每个请求相关的数据都是通过Servlet子类的service方法（或者是doGet或doPost方法）的参数传入的。只要Servlet中的代码只使用局部变量，Servlet就不会导致同步问题。Spring MVC的控制器也是这么做的，从请求中获得的对象都是以方法的参数传入而不是作为类的成员，很明显Struts 2的做法就正好相反，因此Struts 2中作为控制器的Action类都是每个请求对应一个实例。</p>
+</blockquote>
+<h2 id="Java-5以前的并发编程"><a href="#Java-5以前的并发编程" class="headerlink" title="Java 5以前的并发编程"></a>Java 5以前的并发编程</h2><p>Java的线程模型建立在抢占式线程调度的基础上，也就是说：</p>
+<ul>
+<li>所有线程可以很容易的共享同一进程中的对象。</li>
+<li>能够引用这些对象的任何线程都可以修改这些对象。</li>
+<li>为了保护数据，对象可以被锁住。</li>
+</ul>
+<p>  Java基于线程和锁的并发过于底层，而且使用锁很多时候都是很万恶的，因为它相当于让所有的并发都变成了排队等待。<br>  在Java 5以前，可以用synchronized关键字来实现锁的功能，它可以用在代码块和方法上，表示在执行整个代码块或方法之前线程必须取得合适的锁。对于类的非静态方法（成员方法）而言，这意味这要取得对象实例的锁，对于类的静态方法（类方法）而言，要取得类的Class对象的锁，对于同步代码块，程序员可以指定要取得的是那个对象的锁。<br>  不管是同步代码块还是同步方法，每次只有一个线程可以进入，如果其他线程试图进入（不管是同一同步块还是不同的同步块），JVM会将它们挂起（放入到等锁池中）。这种结构在并发理论中称为临界区（critical section）。这里我们可以对Java中用synchronized实现同步和锁的功能做一个总结：
+  </p>
+<ul>
+<li>只能锁定对象，不能锁定基本数据类型</li>
+<li>被锁定的对象数组中的单个对象不会被锁定</li>
+<li>同步方法可以视为包含整个方法的synchronized(this) { … }代码块</li>
+<li>静态同步方法会锁定它的Class对象</li>
+<li>内部类的同步是独立于外部类的</li>
+<li>synchronized修饰符并不是方法签名的组成部分，所以不能出现在接口的方法声明中</li>
+<li>非同步的方法不关心锁的状态，它们在同步方法运行时仍然可以得以运行</li>
+<li>synchronized实现的锁是可重入的锁。</li>
+</ul>
+<p>  在JVM内部，为了提高效率，同时运行的每个线程都会有它正在处理的数据的缓存副本，当我们使用synchronzied进行同步的时候，真正被同步的是在不同线程中表示被锁定对象的内存块（副本数据会保持和主内存的同步，现在知道为什么要用同步这个词汇了吧），简单的说就是在同步块或同步方法执行完后，对被锁定的对象做的任何修改要在释放锁之前写回到主内存中；在进入同步块得到锁之后，被锁定对象的数据是从主内存中读出来的，持有锁的线程的数据副本一定和主内存中的数据视图是同步的 。<br>  在Java最初的版本中，就有一个叫volatile的关键字，它是一种简单的同步的处理机制，因为被volatile修饰的变量遵循以下规则：</p>
+<ul>
+<li>变量的值在使用之前总会从主内存中再读取出来。</li>
+<li>对变量值的修改总会在完成之后写回到主内存中。</li>
+</ul>
+<p>  使用volatile关键字可以在多线程环境下预防编译器不正确的优化假设（编译器可能会将在一个线程中值不会发生改变的变量优化成常量），但只有修改时不依赖当前状态（读取时的值）的变量才应该声明为volatile变量。<br>  不变模式也是并发编程时可以考虑的一种设计。让对象的状态是不变的，如果希望修改对象的状态，就会创建对象的副本并将改变写入副本而不改变原来的对象，这样就不会出现状态不一致的情况，因此不变对象是线程安全的。Java中我们使用频率极高的String类就采用了这样的设计。如果对不变模式不熟悉，可以阅读阎宏博士的《Java与模式》一书的第34章。说到这里你可能也体会到final关键字的重要意义了。</p>
+<h2 id="Java-5的并发编程"><a href="#Java-5的并发编程" class="headerlink" title="Java 5的并发编程"></a>Java 5的并发编程</h2><p>不管今后的Java向着何种方向发展或者灭忙，Java 5绝对是Java发展史中一个极其重要的版本，这个版本提供的各种语言特性我们不在这里讨论（有兴趣的可以阅读我的另一篇文章《Java的第20年：从Java版本演进看编程技术的发展》），但是我们必须要感谢Doug Lea在Java 5中提供了他里程碑式的杰作java.util.concurrent包，它的出现让Java的并发编程有了更多的选择和更好的工作方式。Doug Lea的杰作主要包括以下内容：</p>
+<ul>
+<li>线程池和相关的工具类</li>
+<li>可选的非阻塞解决方案</li>
+<li>显示的锁和信号量机制</li>
+</ul>
+<p>下面我们对这些东西进行一一解读。</p>
+<h3 id="原子类"><a href="#原子类" class="headerlink" title="原子类"></a>原子类</h3><p>Java 5中的java.util.concurrent包下面有一个atomic子包，其中有几个以Atomic打头的类，例如AtomicInteger和AtomicLong。它们利用了现代处理器的特性，可以用非阻塞的方式完成原子操作，代码如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> ID序列生成器</div><div class="line">*/</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">IdGenerator</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> AtomicLong sequenceNumber = <span class="keyword">new</span> AtomicLong(<span class="number">0</span>);</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">next</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> sequenceNumber.getAndIncrement();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="显示锁"><a href="#显示锁" class="headerlink" title="显示锁"></a>显示锁</h3><p>基于synchronized关键字的锁机制有以下问题：</p>
+<ul>
+<li>锁只有一种类型，而且对所有同步操作都是一样的作用</li>
+<li>锁只能在代码块或方法开始的地方获得，在结束的地方释放</li>
+<li>线程要么得到锁，要么阻塞，没有其他的可能性</li>
+</ul>
+<p>Java 5对锁机制进行了重构，提供了显示的锁，这样可以在以下几个方面提升锁机制：</p>
+<ul>
+<li>可以添加不同类型的锁，例如读取锁和写入锁</li>
+<li>可以在一个方法中加锁，在另一个方法中解锁</li>
+<li>可以使用tryLock方式尝试获得锁，如果得不到锁可以等待、回退或者干点别的事情，当然也可以在超时之后放弃操作</li>
+</ul>
+<p>显示的锁都实现了java.util.concurrent.Lock接口，主要有两个实现类：</p>
+<ul>
+<li>ReentrantLock - 比synchronized稍微灵活一些的重入锁</li>
+<li>ReentrantReadWriteLock - 在读操作很多写操作很少时性能更好的一种重入锁</li>
+</ul>
+<p>对于如何使用显示锁，可以参考我的Java面试系列文章《Java面试题集51-70》中第60题的代码。只有一点需要提醒，解锁的方法unlock的调用最好能够在finally块中，因为这里是释放外部资源最好的地方，当然也是释放锁的最佳位置，因为不管正常异常可能都要释放掉锁来给其他线程以运行的机会。</p>
+<h3 id="CountDownLatch"><a href="#CountDownLatch" class="headerlink" title="CountDownLatch"></a>CountDownLatch</h3><p>CountDownLatch是一种简单的同步模式，它让一个线程可以等待一个或多个线程完成它们的工作从而避免对临界资源并发访问所引发的各种问题。下面借用别人的一段代码（我对它做了一些重构）来演示CountDownLatch是如何工作的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.concurrent.CountDownLatch;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 工人类</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Worker</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> String name;        <span class="comment">// 名字</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">long</span> workDuration;  <span class="comment">// 工作持续时间</span></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 构造器</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Worker</span><span class="params">(String name, <span class="keyword">long</span> workDuration)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.name = name;</div><div class="line">        <span class="keyword">this</span>.workDuration = workDuration;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 完成工作</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doWork</span><span class="params">()</span> </span>&#123;</div><div class="line">        System.out.println(name + <span class="string">" begins to work..."</span>);</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            Thread.sleep(workDuration); <span class="comment">// 用休眠模拟工作执行的时间</span></div><div class="line">        &#125; <span class="keyword">catch</span>(InterruptedException ex) &#123;</div><div class="line">            ex.printStackTrace();</div><div class="line">        &#125;</div><div class="line">        System.out.println(name + <span class="string">" has finished the job..."</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 测试线程</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">WorkerTestThread</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> Worker worker;</div><div class="line">    <span class="keyword">private</span> CountDownLatch cdLatch;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">WorkerTestThread</span><span class="params">(Worker worker, CountDownLatch cdLatch)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.worker = worker;</div><div class="line">        <span class="keyword">this</span>.cdLatch = cdLatch;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        worker.doWork();        <span class="comment">// 让工人开始工作</span></div><div class="line">        cdLatch.countDown();    <span class="comment">// 工作完成后倒计时次数减1</span></div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">CountDownLatchTest</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX_WORK_DURATION = <span class="number">5000</span>;  <span class="comment">// 最大工作时间</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MIN_WORK_DURATION = <span class="number">1000</span>;  <span class="comment">// 最小工作时间</span></div><div class="line"></div><div class="line">    <span class="comment">// 产生随机的工作时间</span></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">long</span> <span class="title">getRandomWorkDuration</span><span class="params">(<span class="keyword">long</span> min, <span class="keyword">long</span> max)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> (<span class="keyword">long</span>) (Math.random() * (max - min) + min);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        CountDownLatch latch = <span class="keyword">new</span> CountDownLatch(<span class="number">2</span>);   <span class="comment">// 创建倒计时闩并指定倒计时次数为2</span></div><div class="line">        Worker w1 = <span class="keyword">new</span> Worker(<span class="string">"骆昊"</span>, getRandomWorkDuration(MIN_WORK_DURATION, MAX_WORK_DURATION));</div><div class="line">        Worker w2 = <span class="keyword">new</span> Worker(<span class="string">"王大锤"</span>, getRandomWorkDuration(MIN_WORK_DURATION, MAX_WORK_DURATION));</div><div class="line"></div><div class="line">        <span class="keyword">new</span> Thread(<span class="keyword">new</span> WorkerTestThread(w1, latch)).start();</div><div class="line">        <span class="keyword">new</span> Thread(<span class="keyword">new</span> WorkerTestThread(w2, latch)).start();</div><div class="line"></div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            latch.await();  <span class="comment">// 等待倒计时闩减到0</span></div><div class="line">            System.out.println(<span class="string">"All jobs have been finished!"</span>);</div><div class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="ConcurrentHashMap"><a href="#ConcurrentHashMap" class="headerlink" title="ConcurrentHashMap"></a>ConcurrentHashMap</h3><p>  ConcurrentHashMap是HashMap在并发环境下的版本，大家可能要问，既然已经可以通过Collections.synchronizedMap获得线程安全的映射型容器，为什么还需要ConcurrentHashMap呢？因为通过Collections工具类获得的线程安全的HashMap会在读写数据时对整个容器对象上锁，这样其他使用该容器的线程无论如何也无法再获得该对象的锁，也就意味着要一直等待前一个获得锁的线程离开同步代码块之后才有机会执行。实际上，HashMap是通过哈希函数来确定存放键值对的桶（桶是为了解决哈希冲突而引入的），修改HashMap时并不需要将整个容器锁住，只需要锁住即将修改的“桶”就可以了。HashMap的数据结构如下图所示。<br>  <br>    这里写图片描述<br><img src="http://img.blog.csdn.net/20161117223331962" alt="这里写图片描述"><br>  <br>  此外，ConcurrentHashMap还提供了原子操作的方法，如下所示：</p>
+<ul>
+<li>putIfAbsent：如果还没有对应的键值对映射，就将其添加到HashMap中。</li>
+<li>remove：如果键存在而且值与当前状态相等（equals比较结果为true），则用原子方式移除该键值对映射</li>
+<li>replace：替换掉映射中元素的原子操作</li>
+</ul>
+<h3 id="CopyOnWriteArrayList"><a href="#CopyOnWriteArrayList" class="headerlink" title="CopyOnWriteArrayList"></a>CopyOnWriteArrayList</h3><p>  CopyOnWriteArrayList是ArrayList在并发环境下的替代品。CopyOnWriteArrayList通过增加写时复制语义来避免并发访问引起的问题，也就是说任何修改操作都会在底层创建一个列表的副本，也就意味着之前已有的迭代器不会碰到意料之外的修改。这种方式对于不要严格读写同步的场景非常有用，因为它提供了更好的性能。记住，要尽量减少锁的使用，因为那势必带来性能的下降（对数据库中数据的并发访问不也是如此吗？如果可以的话就应该放弃悲观锁而使用乐观锁），CopyOnWriteArrayList很明显也是通过牺牲空间获得了时间（在计算机的世界里，时间和空间通常是不可调和的矛盾，可以牺牲空间来提升效率获得时间，当然也可以通过牺牲时间来减少对空间的使用）。</p>
+<p>这里写图片描述<br><img src="http://img.blog.csdn.net/20161117223416527" alt="这里写图片描述"><br>  <br>  可以通过下面两段代码的运行状况来验证一下CopyOnWriteArrayList是不是线程安全的容器。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.ArrayList;</div><div class="line"><span class="keyword">import</span> java.util.List;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.ExecutorService;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.Executors;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">AddThread</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> List&lt;Double&gt; list;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">AddThread</span><span class="params">(List&lt;Double&gt; list)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.list = list;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10000</span>; ++i) &#123;</div><div class="line">            list.add(Math.random());</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test05</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> THREAD_POOL_SIZE = <span class="number">2</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        List&lt;Double&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();</div><div class="line">        ExecutorService es = Executors.newFixedThreadPool(THREAD_POOL_SIZE);</div><div class="line">        es.execute(<span class="keyword">new</span> AddThread(list));</div><div class="line">        es.execute(<span class="keyword">new</span> AddThread(list));</div><div class="line">        es.shutdown();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码会在运行时产生ArrayIndexOutOfBoundsException，试一试将上面代码25行的ArrayList换成CopyOnWriteArrayList再重新运行。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">List&lt;Double&gt; list = <span class="keyword">new</span> CopyOnWriteArrayList&lt;&gt;();</div></pre></td></tr></table></figure></p>
+<h3 id="Queue"><a href="#Queue" class="headerlink" title="Queue"></a>Queue</h3><p>  队列是一个无处不在的美妙概念，它提供了一种简单又可靠的方式将资源分发给处理单元（也可以说是将工作单元分配给待处理的资源，这取决于你看待问题的方式）。实现中的并发编程模型很多都依赖队列来实现，因为它可以在线程之间传递工作单元。<br>  Java 5中的BlockingQueue就是一个在并发环境下非常好用的工具，在调用put方法向队列中插入元素时，如果队列已满，它会让插入元素的线程等待队列腾出空间；在调用take方法从队列中取元素时，如果队列为空，取出元素的线程就会阻塞。<br>  <br>    这里写图片描述<br>    <img src="http://img.blog.csdn.net/20161117223733249" alt="这里写图片描述"></p>
+<p>  可以用BlockingQueue来实现生产者-消费者并发模型（下一节中有介绍），当然在Java 5以前也可以通过wait和notify来实现线程调度，比较一下两种代码就知道基于已有的并发工具类来重构并发代码到底好在哪里了。</p>
+<ul>
+<li><p>基于wait和notify的实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.ArrayList;</div><div class="line"><span class="keyword">import</span> java.util.List;</div><div class="line"><span class="keyword">import</span> java.util.UUID;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.ExecutorService;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.Executors;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 公共常量</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Constants</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX_BUFFER_SIZE = <span class="number">10</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NUM_OF_PRODUCER = <span class="number">2</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NUM_OF_CONSUMER = <span class="number">3</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 工作任务</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Task</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> String id;  <span class="comment">// 任务的编号</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Task</span><span class="params">()</span> </span>&#123;</div><div class="line">        id = UUID.randomUUID().toString();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="string">"Task["</span> + id + <span class="string">"]"</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 消费者</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Consumer</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> List&lt;Task&gt; buffer;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Consumer</span><span class="params">(List&lt;Task&gt; buffer)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.buffer = buffer;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</div><div class="line">            <span class="keyword">synchronized</span>(buffer) &#123;</div><div class="line">                <span class="keyword">while</span>(buffer.isEmpty()) &#123;</div><div class="line">                    <span class="keyword">try</span> &#123;</div><div class="line">                        buffer.wait();</div><div class="line">                    &#125; <span class="keyword">catch</span>(InterruptedException e) &#123;</div><div class="line">                        e.printStackTrace();</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">                Task task = buffer.remove(<span class="number">0</span>);</div><div class="line">                buffer.notifyAll();</div><div class="line">                System.out.println(<span class="string">"Consumer["</span> + Thread.currentThread().getName() + <span class="string">"] got "</span> + task);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 生产者</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Producer</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> List&lt;Task&gt; buffer;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Producer</span><span class="params">(List&lt;Task&gt; buffer)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.buffer = buffer;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</div><div class="line">            <span class="keyword">synchronized</span> (buffer) &#123;</div><div class="line">                <span class="keyword">while</span>(buffer.size() &gt;= Constants.MAX_BUFFER_SIZE) &#123;</div><div class="line">                    <span class="keyword">try</span> &#123;</div><div class="line">                        buffer.wait();</div><div class="line">                    &#125; <span class="keyword">catch</span>(InterruptedException e) &#123;</div><div class="line">                        e.printStackTrace();</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">                Task task = <span class="keyword">new</span> Task();</div><div class="line">                buffer.add(task);</div><div class="line">                buffer.notifyAll();</div><div class="line">                System.out.println(<span class="string">"Producer["</span> + Thread.currentThread().getName() + <span class="string">"] put "</span> + task);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test06</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        List&lt;Task&gt; buffer = <span class="keyword">new</span> ArrayList&lt;&gt;(Constants.MAX_BUFFER_SIZE);</div><div class="line">        ExecutorService es = Executors.newFixedThreadPool(Constants.NUM_OF_CONSUMER + Constants.NUM_OF_PRODUCER);</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= Constants.NUM_OF_PRODUCER; ++i) &#123;</div><div class="line">            es.execute(<span class="keyword">new</span> Producer(buffer));</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= Constants.NUM_OF_CONSUMER; ++i) &#123;</div><div class="line">            es.execute(<span class="keyword">new</span> Consumer(buffer));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>基于BlockingQueue的实现</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.UUID;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.BlockingQueue;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.ExecutorService;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.Executors;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.LinkedBlockingQueue;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 公共常量</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Constants</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX_BUFFER_SIZE = <span class="number">10</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NUM_OF_PRODUCER = <span class="number">2</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NUM_OF_CONSUMER = <span class="number">3</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 工作任务</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Task</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> String id;  <span class="comment">// 任务的编号</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Task</span><span class="params">()</span> </span>&#123;</div><div class="line">        id = UUID.randomUUID().toString();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="string">"Task["</span> + id + <span class="string">"]"</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 消费者</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Consumer</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> BlockingQueue&lt;Task&gt; buffer;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Consumer</span><span class="params">(BlockingQueue&lt;Task&gt; buffer)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.buffer = buffer;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                Task task = buffer.take();</div><div class="line">                System.out.println(<span class="string">"Consumer["</span> + Thread.currentThread().getName() + <span class="string">"] got "</span> + task);</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 生产者</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Producer</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> BlockingQueue&lt;Task&gt; buffer;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Producer</span><span class="params">(BlockingQueue&lt;Task&gt; buffer)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.buffer = buffer;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                Task task = <span class="keyword">new</span> Task();</div><div class="line">                buffer.put(task);</div><div class="line">                System.out.println(<span class="string">"Producer["</span> + Thread.currentThread().getName() + <span class="string">"] put "</span> + task);</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line"></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test07</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        BlockingQueue&lt;Task&gt; buffer = <span class="keyword">new</span> LinkedBlockingQueue&lt;&gt;(Constants.MAX_BUFFER_SIZE);</div><div class="line">        ExecutorService es = Executors.newFixedThreadPool(Constants.NUM_OF_CONSUMER + Constants.NUM_OF_PRODUCER);</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= Constants.NUM_OF_PRODUCER; ++i) &#123;</div><div class="line">            es.execute(<span class="keyword">new</span> Producer(buffer));</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= Constants.NUM_OF_CONSUMER; ++i) &#123;</div><div class="line">            es.execute(<span class="keyword">new</span> Consumer(buffer));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>  使用BlockingQueue后代码优雅了很多。</p>
+<h2 id="并发模型"><a href="#并发模型" class="headerlink" title="并发模型"></a>并发模型</h2><p>  在继续下面的探讨之前，我们还是重温一下几个概念：<br>| 概念 |    解释|<br>| :—–|:——|<br>| 临界资源 |    并发环境中有着固定数量的资源|<br>| 互斥 |    对资源的访问是排他式的|<br>| 饥饿 |    一个或一组线程长时间或永远无法取得进展|<br>| 死锁 |    两个或多个线程相互等待对方结束|<br>| 活锁 |    想要执行的线程总是发现其他的线程正在执行以至于长时间或永远无法执行|</p>
+<p>  重温了这几个概念后，我们可以探讨一下下面的几种并发模型。</p>
+<ul>
+<li>生产者-消费者</li>
+</ul>
+<p>  一个或多个生产者创建某些工作并将其置于缓冲区或队列中，一个或多个消费者会从队列中获得这些工作并完成之。这里的缓冲区或队列是临界资源。当缓冲区或队列放满的时候，生产这会被阻塞；而缓冲区或队列为空的时候，消费者会被阻塞。生产者和消费者的调度是通过二者相互交换信号完成的。</p>
+<ul>
+<li>读者-写者</li>
+</ul>
+<p>  当存在一个主要为读者提供信息的共享资源，它偶尔会被写者更新，但是需要考虑系统的吞吐量，又要防止饥饿和陈旧资源得不到更新的问题。在这种并发模型中，如何平衡读者和写者是最困难的，当然这个问题至今还是一个被热议的问题，恐怕必须根据具体的场景来提供合适的解决方案而没有那种放之四海而皆准的方法（不像我在国内的科研文献中看到的那样）。</p>
+<ul>
+<li>哲学家进餐</li>
+</ul>
+<p>  1965年，荷兰计算机科学家图灵奖得主Edsger Wybe Dijkstra提出并解决了一个他称之为哲学家进餐的同步问题。这个问题可以简单地描述如下：五个哲学家围坐在一张圆桌周围，每个哲学家面前都有一盘通心粉。由于通心粉很滑，所以需要两把叉子才能夹住。相邻两个盘子之间放有一把叉子如下图所示。哲学家的生活中有两种交替活动时段：即吃饭和思考。当一个哲学家觉得饿了时，他就试图分两次去取其左边和右边的叉子，每次拿一把，但不分次序。如果成功地得到了两把叉子，就开始吃饭，吃完后放下叉子继续思考。<br>  把上面问题中的哲学家换成线程，把叉子换成竞争的临界资源，上面的问题就是线程竞争资源的问题。如果没有经过精心的设计，系统就会出现死锁、活锁、吞吐量下降等问题。</p>
+<pre><code>这里写图片描述
+</code></pre><p><img src="http://img.blog.csdn.net/20161117223617747" alt="这里写图片描述"><br>  下面是用信号量原语来解决哲学家进餐问题的代码，使用了Java 5并发工具包中的Semaphore类（代码不够漂亮但是已经足以说明问题了）。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//import java.util.concurrent.ExecutorService;</span></div><div class="line"><span class="comment">//import java.util.concurrent.Executors;</span></div><div class="line"><span class="keyword">import</span> java.util.concurrent.Semaphore;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 存放线程共享信号量的上下问</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">AppContext</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NUM_OF_FORKS = <span class="number">5</span>;   <span class="comment">// 叉子数量(资源)</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NUM_OF_PHILO = <span class="number">5</span>;   <span class="comment">// 哲学家数量(线程)</span></div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Semaphore[] forks;    <span class="comment">// 叉子的信号量</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Semaphore counter;    <span class="comment">// 哲学家的信号量</span></div><div class="line"></div><div class="line">    <span class="keyword">static</span> &#123;</div><div class="line">        forks = <span class="keyword">new</span> Semaphore[NUM_OF_FORKS];</div><div class="line"></div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>, len = forks.length; i &lt; len; ++i) &#123;</div><div class="line">            forks[i] = <span class="keyword">new</span> Semaphore(<span class="number">1</span>);    <span class="comment">// 每个叉子的信号量为1</span></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        counter = <span class="keyword">new</span> Semaphore(NUM_OF_PHILO - <span class="number">1</span>);  <span class="comment">// 如果有N个哲学家，最多只允许N-1人同时取叉子</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 取得叉子</div><div class="line">     * <span class="doctag">@param</span> index 第几个哲学家</div><div class="line">     * <span class="doctag">@param</span> leftFirst 是否先取得左边的叉子</div><div class="line">     * <span class="doctag">@throws</span> InterruptedException</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">putOnFork</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">boolean</span> leftFirst)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">if</span>(leftFirst) &#123;</div><div class="line">            forks[index].acquire();</div><div class="line">            forks[(index + <span class="number">1</span>) % NUM_OF_PHILO].acquire();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">else</span> &#123;</div><div class="line">            forks[(index + <span class="number">1</span>) % NUM_OF_PHILO].acquire();</div><div class="line">            forks[index].acquire();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 放回叉子</div><div class="line">     * <span class="doctag">@param</span> index 第几个哲学家</div><div class="line">     * <span class="doctag">@param</span> leftFirst 是否先放回左边的叉子</div><div class="line">     * <span class="doctag">@throws</span> InterruptedException</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">putDownFork</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">boolean</span> leftFirst)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">if</span>(leftFirst) &#123;</div><div class="line">            forks[index].release();</div><div class="line">            forks[(index + <span class="number">1</span>) % NUM_OF_PHILO].release();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">else</span> &#123;</div><div class="line">            forks[(index + <span class="number">1</span>) % NUM_OF_PHILO].release();</div><div class="line">            forks[index].release();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 哲学家</div><div class="line"> * <span class="doctag">@author</span> 骆昊</div><div class="line"> *</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Philosopher</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> index;      <span class="comment">// 编号</span></div><div class="line">    <span class="keyword">private</span> String name;    <span class="comment">// 名字</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Philosopher</span><span class="params">(<span class="keyword">int</span> index, String name)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.index = index;</div><div class="line">        <span class="keyword">this</span>.name = name;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                AppContext.counter.acquire();</div><div class="line">                <span class="keyword">boolean</span> leftFirst = index % <span class="number">2</span> == <span class="number">0</span>;</div><div class="line">                AppContext.putOnFork(index, leftFirst);</div><div class="line">                System.out.println(name + <span class="string">"正在吃意大利面（通心粉）..."</span>);   <span class="comment">// 取到两个叉子就可以进食</span></div><div class="line">                AppContext.putDownFork(index, leftFirst);</div><div class="line">                AppContext.counter.release();</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test04</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        String[] names = &#123; <span class="string">"骆昊"</span>, <span class="string">"王大锤"</span>, <span class="string">"张三丰"</span>, <span class="string">"杨过"</span>, <span class="string">"李莫愁"</span> &#125;;   <span class="comment">// 5位哲学家的名字</span></div><div class="line"><span class="comment">//      ExecutorService es = Executors.newFixedThreadPool(AppContext.NUM_OF_PHILO); // 创建固定大小的线程池</span></div><div class="line"><span class="comment">//      for(int i = 0, len = names.length; i &lt; len; ++i) &#123;</span></div><div class="line"><span class="comment">//          es.execute(new Philosopher(i, names[i]));   // 启动线程</span></div><div class="line"><span class="comment">//      &#125;</span></div><div class="line"><span class="comment">//      es.shutdown();</span></div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>, len = names.length; i &lt; len; ++i) &#123;</div><div class="line">            <span class="keyword">new</span> Thread(<span class="keyword">new</span> Philosopher(i, names[i])).start();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>  现实中的并发问题基本上都是这三种模型或者是这三种模型的变体。</p>
+<h2 id="测试并发代码"><a href="#测试并发代码" class="headerlink" title="测试并发代码"></a>测试并发代码</h2><p>对并发代码的测试也是非常棘手的事情，棘手到无需说明大家也很清楚的程度，所以这里我们只是探讨一下如何解决这个棘手的问题。我们建议大家编写一些能够发现问题的测试并经常性的在不同的配置和不同的负载下运行这些测试。不要忽略掉任何一次失败的测试，线程代码中的缺陷可能在上万次测试中仅仅出现一次。具体来说有这么几个注意事项：</p>
+<pre><code>不要将系统的失效归结于偶发事件，就像拉不出屎的时候不能怪地球没有引力。
+先让非并发代码工作起来，不要试图同时找到并发和非并发代码中的缺陷。
+编写可以在不同配置环境下运行的线程代码。
+编写容易调整的线程代码，这样可以调整线程使性能达到最优。
+让线程的数量多于CPU或CPU核心的数量，这样CPU调度切换过程中潜在的问题才会暴露出来。
+让并发代码在不同的平台上运行。
+通过自动化或者硬编码的方式向并发代码中加入一些辅助测试的代码。
+</code></pre><h2 id="Java-7的并发编程"><a href="#Java-7的并发编程" class="headerlink" title="Java 7的并发编程"></a>Java 7的并发编程</h2><p>  Java 7中引入了TransferQueue，它比BlockingQueue多了一个叫transfer的方法，如果接收线程处于等待状态，该操作可以马上将任务交给它，否则就会阻塞直至取走该任务的线程出现。可以用TransferQueue代替BlockingQueue，因为它可以获得更好的性能。<br>  刚才忘记了一件事情，Java 5中还引入了Callable接口、Future接口和FutureTask接口，通过他们也可以构建并发应用程序，代码如下所示。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.ArrayList;</div><div class="line"><span class="keyword">import</span> java.util.List;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.Callable;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.ExecutorService;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.Executors;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.Future;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test07</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> POOL_SIZE = <span class="number">10</span>;</div><div class="line"></div><div class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">CalcThread</span> <span class="keyword">implements</span> <span class="title">Callable</span>&lt;<span class="title">Double</span>&gt; </span>&#123;</div><div class="line">        <span class="keyword">private</span> List&lt;Double&gt; dataList = <span class="keyword">new</span> ArrayList&lt;&gt;();</div><div class="line"></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="title">CalcThread</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10000</span>; ++i) &#123;</div><div class="line">                dataList.add(Math.random());</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> Double <span class="title">call</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">            <span class="keyword">double</span> total = <span class="number">0</span>;</div><div class="line">            <span class="keyword">for</span>(Double d : dataList) &#123;</div><div class="line">                total += d;</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">return</span> total / dataList.size();</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        List&lt;Future&lt;Double&gt;&gt; fList = <span class="keyword">new</span> ArrayList&lt;&gt;();</div><div class="line">        ExecutorService es = Executors.newFixedThreadPool(POOL_SIZE);</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; POOL_SIZE; ++i) &#123;</div><div class="line">            fList.add(es.submit(<span class="keyword">new</span> CalcThread()));</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">for</span>(Future&lt;Double&gt; f : fList) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                System.out.println(f.get());</div><div class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        es.shutdown();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>  Callable接口也是一个单方法接口，显然这是一个回调方法，类似于函数式编程中的回调函数，在Java 8 以前，Java中还不能使用Lambda表达式来简化这种函数式编程。和Runnable接口不同的是Callable接口的回调方法call方法会返回一个对象，这个对象可以用将来时的方式在线程执行结束的时候获得信息。上面代码中的call方法就是将计算出的10000个0到1之间的随机小数的平均值返回，我们通过一个Future接口的对象得到了这个返回值。目前最新的Java版本中，Callable接口和Runnable接口都被打上了@FunctionalInterface的注解，也就是说它可以用函数式编程的方式（Lambda表达式）创建接口对象。<br>  下面是Future接口的主要方法：</p>
+<pre><code>get()：获取结果。如果结果还没有准备好，get方法会阻塞直到取得结果；当然也可以通过参数设置阻塞超时时间。
+cancel()：在运算结束前取消。
+isDone()：可以用来判断运算是否结束。
+</code></pre><p>  Java 7中还提供了分支/合并（fork/join）框架，它可以实现线程池中任务的自动调度，并且这种调度对用户来说是透明的。为了达到这种效果，必须按照用户指定的方式对任务进行分解，然后再将分解出的小型任务的执行结果合并成原来任务的执行结果。这显然是运用了分治法（divide-and-conquer）的思想。下面的代码使用了分支/合并框架来计算1到10000的和，当然对于如此简单的任务根本不需要分支/合并框架，因为分支和合并本身也会带来一定的开销，但是这里我们只是探索一下在代码中如何使用分支/合并框架，让我们的代码能够充分利用现代多核CPU的强大运算能力。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.concurrent.ForkJoinPool;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.Future;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.RecursiveTask;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Calculator</span> <span class="keyword">extends</span> <span class="title">RecursiveTask</span>&lt;<span class="title">Integer</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="number">7333472779649130114L</span>;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> THRESHOLD = <span class="number">10</span>;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> start;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> end;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Calculator</span><span class="params">(<span class="keyword">int</span> start, <span class="keyword">int</span> end)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.start = start;</div><div class="line">        <span class="keyword">this</span>.end = end;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> Integer <span class="title">compute</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> sum = <span class="number">0</span>;</div><div class="line">        <span class="keyword">if</span> ((end - start) &lt; THRESHOLD) &#123;    <span class="comment">// 当问题分解到可求解程度时直接计算结果</span></div><div class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = start; i &lt;= end; i++) &#123;</div><div class="line">                sum += i;</div><div class="line">            &#125;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="keyword">int</span> middle = (start + end) &gt;&gt;&gt; <span class="number">1</span>;</div><div class="line">            <span class="comment">// 将任务一分为二</span></div><div class="line">            Calculator left = <span class="keyword">new</span> Calculator(start, middle);</div><div class="line">            Calculator right = <span class="keyword">new</span> Calculator(middle + <span class="number">1</span>, end);</div><div class="line">            left.fork();</div><div class="line">            right.fork();</div><div class="line">            <span class="comment">// 注意：由于此处是递归式的任务分解，也就意味着接下来会二分为四，四分为八...</span></div><div class="line"></div><div class="line">            sum = left.join() + right.join();   <span class="comment">// 合并两个子任务的结果</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> sum;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test08</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">        ForkJoinPool forkJoinPool = <span class="keyword">new</span> ForkJoinPool();</div><div class="line">        Future&lt;Integer&gt; result = forkJoinPool.submit(<span class="keyword">new</span> Calculator(<span class="number">1</span>, <span class="number">10000</span>));</div><div class="line">        System.out.println(result.get());</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>  伴随着Java 7的到来，Java中默认的数组排序算法已经不再是经典的快速排序（双枢轴快速排序）了，新的排序算法叫TimSort，它是归并排序和插入排序的混合体，TimSort可以通过分支合并框架充分利用现代处理器的多核特性，从而获得更好的性能（更短的排序时间）。</p>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><pre><code>Benjamin J. Evans, etc, The Well-Grounded Java Developer. Jul 21, 2012
+Robert Martin, Clean Code. Aug 11, 2008.
+Doug Lea, Concurrent Programming in Java: Design Principles and Patterns. 1999
+</code></pre><p>转自：<a href="http://blog.csdn.net/jackfrued/article/details/44499227" target="_blank" rel="external">http://blog.csdn.net/jackfrued/article/details/44499227</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/concurrent/" rel="tag"># concurrent</a>
+          
+            <a href="/tags/design-thinking/" rel="tag"># design thinking</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/23/hexo-github安装过程记录/" rel="next" title="hexo-github安装过程记录">
+                <i class="fa fa-chevron-left"></i> hexo-github安装过程记录
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/23/mokito/" rel="prev" title="mokito">
+                mokito <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://chuantu.biz/t5/44/1482477270x1926756903.jpg"
+               alt="arthur.dy.lee" />
+          <p class="site-author-name" itemprop="name">arthur.dy.lee</p>
+          <p class="site-description motion-element" itemprop="description">A good life is one inspired by love and guided by knowledge.</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/paincupid" target="_blank" title="csdn">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  csdn
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://git.oschina.net/paincupid" target="_blank" title="oschina">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  oschina
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么需要并发"><span class="nav-number">1.</span> <span class="nav-text">为什么需要并发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#误解和正解"><span class="nav-number">2.</span> <span class="nav-text">误解和正解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发编程的原则和技巧"><span class="nav-number">3.</span> <span class="nav-text">并发编程的原则和技巧</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单一职责原则"><span class="nav-number">3.1.</span> <span class="nav-text">单一职责原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#限制数据作用域"><span class="nav-number">3.2.</span> <span class="nav-text">限制数据作用域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用数据副本"><span class="nav-number">3.3.</span> <span class="nav-text">使用数据副本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#线程应尽可能独立"><span class="nav-number">3.4.</span> <span class="nav-text">线程应尽可能独立</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-5以前的并发编程"><span class="nav-number">4.</span> <span class="nav-text">Java 5以前的并发编程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-5的并发编程"><span class="nav-number">5.</span> <span class="nav-text">Java 5的并发编程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#原子类"><span class="nav-number">5.1.</span> <span class="nav-text">原子类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#显示锁"><span class="nav-number">5.2.</span> <span class="nav-text">显示锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CountDownLatch"><span class="nav-number">5.3.</span> <span class="nav-text">CountDownLatch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ConcurrentHashMap"><span class="nav-number">5.4.</span> <span class="nav-text">ConcurrentHashMap</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CopyOnWriteArrayList"><span class="nav-number">5.5.</span> <span class="nav-text">CopyOnWriteArrayList</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Queue"><span class="nav-number">5.6.</span> <span class="nav-text">Queue</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发模型"><span class="nav-number">6.</span> <span class="nav-text">并发模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#测试并发代码"><span class="nav-number">7.</span> <span class="nav-text">测试并发代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-7的并发编程"><span class="nav-number">8.</span> <span class="nav-text">Java 7的并发编程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文献"><span class="nav-number">8.1.</span> <span class="nav-text">参考文献</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">arthur.dy.lee</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
